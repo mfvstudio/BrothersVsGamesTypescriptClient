@@ -1,0 +1,551 @@
+openapi: 3.0.4
+info:
+  title: BrothersVsGames
+  description: |-
+    This is an OpenApi 3.0 specification for BvG api. Used as a model for the backend server api and front-end client.
+    BvG is a small, solo, project by mfv.
+
+  contact:
+    email: contactbrothersvsgames@gmail.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: localhost:8080/v0
+tags:
+  - name: player
+    description: Operations for players
+  - name: games
+    description: Operations for games
+  - name: health
+    description: check the health of the server.
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Used to check health of the server
+      description: health status
+      operationId: health
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+        '400':
+          description: Invalid Request
+        '403':
+          description: Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players:
+    post:
+      tags:
+        - player
+      summary: Create a new player
+      description: Create a new user account to be able to play games.
+      operationId: createAccount
+      requestBody:
+        description: Create a new player account.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerCreate'
+        required: true
+      responses:
+        '201':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Invalid Request
+        '403':
+          description: Forbidden
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players/login:
+    post:
+      tags:
+        - player
+      summary: Login existing player
+      description: Login Existing Player.
+      operationId: loginPlayer
+      requestBody:
+        required: true
+        description: Player Login
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/PlayerLogin'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players/{uid}/logout:
+    delete:
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+          required: true
+      tags:
+        - player
+      summary: Logs out logged in player
+      description: Logs out logged in player.
+      operationId: logoutPlayer
+      security:
+        - bearerAuth: ["write:player"]
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'   
+  /games:
+    post:
+      tags:
+        - games
+      summary: Add a game to store
+      description: Upload a game
+      operationId: addGame
+      security:
+        - bearerAuth: ["write:games"]
+      requestBody:
+        description: request object for uploading a game
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostGame'
+        required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /games/{uid}:
+    put:
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+          required: true
+      tags:
+        - games
+      summary: Update a games metadata
+      description: Use to update a games info
+      operationId: updateGame
+      security:
+        - bearerAuth: ["write:games"]
+      requestBody:
+        description: update game object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGame'
+        required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+          required: true
+      tags:
+        - games
+      summary: Delete a game from store
+      description: Use to delete a game
+      operationId: deleteGame
+      security:
+        - bearerAuth: ["write:games"]
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /search/games:
+    post:
+      tags:
+        - games
+      summary: Search game catalog
+      description: Used to search for single or batch get
+      operationId: searchGames
+      requestBody:
+        required: true
+        description: Search Request body
+        content:
+          applicaiton/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      security:
+        - bearerAuth: ["read:games"]
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /search/players:
+    post:
+      tags:
+        - player
+      summary: Search for players
+      description: Used to search for single or batch get
+      operationId: searchPlayers
+      requestBody:
+        description: Search Request body
+        content:
+          applicaiton/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      security:
+        - bearerAuth: ["read:players"]
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    HealthCheck:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    PostGame:
+      type: object
+      required:
+        - title
+        - description
+        - tags
+      properties:
+        title:
+          type: string
+          example: Elder's ring
+        description: 
+          type: string
+          example: Game of the year edition
+        imageCoverUrl:
+          type: string
+          example: us-east-2.s3-bucket.come/someId
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["rpg", "co-op"]
+    UpdateGame:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          example: Elder's Ring NightRain
+        description:
+          type: string
+          example: soon to be game of the year
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["rogue-like"]
+    PlayerCreate:
+      type: object
+      required:
+        - username
+        - password
+        - email
+        - birthdate
+      properties:
+        username:
+          type: string
+          example: letmesolohim
+        password:
+          type: string
+          pattern: "^[a-z][A-Z][0-9]+$" #TODO, check regex
+          example: 'somePa$$w0rd_'
+          format: password
+        email:
+          type: string
+          pattern: "^[a-z][A-Z][0-9]@[a-z].com$"
+          example: 'someEmail@provider.com'
+          format: email
+        birthdate:
+          type: integer
+          format: int64
+          example: 6584613516
+      xml:
+        name: playercreate
+    PlayerLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          pattern: "^[a-z][A-Z][0-9]@[a-z].com$"
+          example: 'someEmail@provider.com'
+        password:
+          type: string
+          pattern: "^[a-z][A-Z][0-9]+$" #TODO, check regex
+          example: 'somePa$$w0rd_'
+          format: password
+      xml:
+        name: playerlogin
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+      xml:
+        name: '##default'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    SearchRequest:
+      type: object
+      properties:
+        uid:
+          type: string
+          example: "The last of you"
+        lastKey:
+          type: string
+          example: "1234538"
+        limit:
+          type: integer
+          format: int32
+          example: 10
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["platformer", "dating-sim"]
+    SearchResponse:
+      type: object
+      required:
+        - games
+        - count
+        - lastEval
+      properties:
+        games:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameAsset'
+        count:
+          type: integer
+          format: int32
+          example: 2113
+        lastKey:
+          type: string
+          example: "titleOfGame_uid"
+    GameAsset:
+      type: object
+      required:
+        - title
+        - description
+        - imageCoverUrl
+        - storageUrl
+        - playCount
+        - tags
+        - topTenScores
+        - sortKey
+        - uid
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        imageCoverUrl:
+          type: string
+        storageUrl:
+          type: string
+        playCount:
+          type: integer
+          format: int64
+        tags:
+          type: array
+          items:
+            type: string
+        topTenScores:
+          type: object
+          items:
+            $ref: '#/components/schemas/PlaySessionEntry'
+        sortKey:
+          type: string
+        uid:
+          type: string
+    PlaySessionEntry:
+      type: object
+      required:
+        - username
+        - score
+        - completionTime
+      properties:
+        username:
+          type: string
+        score:
+          type: integer
+          format: int64
+        completionTime:
+          type: integer
+          format: int64
+  requestBodies:
+    SearchRequest:
+      description: Request payload to look for games, players
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchRequest'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/SearchRequest'
+    PlayerCreate:
+      description: Player object to add to store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerCreate'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/PlayerCreate'
+    PostGame:
+      description: Game object to add to store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PostGame'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/PostGame'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
